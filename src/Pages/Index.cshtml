@@ -1,10 +1,23 @@
-﻿@page
-@model IndexModel
+@page
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Setup";
+    Layout = "Layout/_Main";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<script>
+ async function redirectIfNotReady(){
+     const [worldResponse, connectionResponse] = await Promise.all([
+	 fetch("/api/world/all?count=1"),
+	 fetch("/api/connection/all?count=1")
+     ]);
+
+     const worlds = await worldResponse.json();
+     const connections = await connectionResponse.json();
+
+     if(worlds.length === 0 && connections.length === 0){
+	 window.location.href = "/Setup";
+     }
+ }
+
+redirectIfNotReady();
+</script>

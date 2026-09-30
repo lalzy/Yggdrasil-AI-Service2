@@ -70,15 +70,16 @@ Run tests with ```dotnet test```
 
 ```
 src/
-  Constants/ - Static Objects holding Static values.
   Controllers/ - API Endpoints
   Data/ - Database Definition
   Models/
     /Entities - Database Table
     /DTO - Data Transfer Objects
+	/Enums - Shared enums.
   Pages/ - Razor Pages
   Services/ - Business Logic
   Utils/ - Utilities.
+  wwwroot/ - static files
 Migrations/ - EF Core Migrations. Migrations are auto-ran on dotnet run
 Tests/ - Unit, Integrity and E2E tests.
 ```
