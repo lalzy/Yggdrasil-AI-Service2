@@ -5,9 +5,8 @@ namespace Yggdrasil.Models.Enums;
 public enum SortOrder
 {
     /// <summary>Identifier can be name, an order-int, etc</summary>
-    IdentifierAsc,
-    /// <inheritdoc cref="IdentifierAsc"/>
-    IdentifierDesc,
+    NameAsc,
+    NameDesc,
     CreatedAsc,
     CreatedDesc,
     ModifiedAsc,
