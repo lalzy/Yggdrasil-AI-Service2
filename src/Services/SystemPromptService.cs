@@ -19,10 +19,10 @@ public class SystemPromptServices(AppDbContext db){
     }
 
     /// <summary>Fetch a requested SystemPrompt</summary>
-    /// <param name="systemPromptID">The Guid of the systemPrompt</param>
+    /// <param name="ID">The Guid of the systemPrompt</param>
     /// <returns>System Prompt if found, otherwise null</returns>
-    public SystemPrompt? Get(Guid systemPromptID){
-        return db.Set<SystemPrompt>().Include(sp => sp.Prompts).FirstOrDefault(sp => sp.ID == systemPromptID);
+    public SystemPrompt? Get(Guid ID){
+        return db.Set<SystemPrompt>().Include(sp => sp.Prompts).FirstOrDefault(sp => sp.ID == ID);
     }
 
     /// <summary>Fetch all System prompts</summary>
@@ -44,5 +44,19 @@ public class SystemPromptServices(AppDbContext db){
             _ => throw new ArgumentOutOfRangeException(nameof(sortOrder), sortOrder, null)
         };
         return request.Include(sp => sp.Prompts).Skip(pageIndex * count).Take(count).ToList();
+    }
+
+    /// <summary></summary>
+    /// <param name="ID">The SystemPrompt ID to edit</param>
+    /// <param name="request">The updatedDTO Request</param>
+    /// <returns>The changed SystemPrompt</returns>
+    public SystemPrompt Update(Guid ID, SystemPromptDTO.UpdateRequest request){
+        return new SystemPrompt();
+    }
+
+    /// <summary>Delete System prompt</summary>
+    /// <param name="ID">The SystemPrompt ID to delete</param>
+    public void Delete(Guid ID){
+        
     }
 }

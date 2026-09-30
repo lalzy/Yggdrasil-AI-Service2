@@ -1,5 +1,6 @@
 // SystemPromptServiceTests.cs
 
+using AutoBogus;
 using Bogus;
 using Yggdrasil.Tests.TestUtil;
 using Yggdrasil.Services;
@@ -143,5 +144,26 @@ public class SystemPromptServicesTests : DatabaseSetup{
         var expected = _service.GetAll(count: 10, pageIndex:0, sortOrder:SortOrder.IDAsc).Select(p => p.ID);
 
         Assert.Equal(expected, defaults);
+    }
+
+    [Fact]
+    public void Update_NameChangeSuccess(){
+        var original = SystemPromptFactory.Create(Db());
+        var request = new SystemPromptDTO.UpdateRequest{Name=_faker.Lorem.Word()};
+        
+        original.Name = request.Name; // Add request name to original.
+
+        var fetched = _service.Update(original.ID, request);
+
+        Assert.Equivalent(original, fetched);
+
+        fetched = Db().Set<SystemPrompt>().Include(sp => sp.Prompts).Single(sp => sp.ID == original.ID);
+
+        Assert.Equivalent(original, fetched);
+    }
+
+    [Fact]
+    public void Update_PromptChangeSuccess(){
+        
     }
 }
