@@ -10,9 +10,4 @@ public class SystemPromptDTO{
         [Required] string Name,
         [Required, MinLength(1)] List<Prompt> prompts
     );
-
-    public record UpdateRequest(
-        string? Name = null,
-        [MinLength(1)] List<Prompt>? Prompts = null
-    );
 }

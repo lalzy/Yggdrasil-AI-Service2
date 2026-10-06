@@ -46,17 +46,36 @@ public class SystemPromptServices(AppDbContext db){
         return request.Include(sp => sp.Prompts).Skip(pageIndex * count).Take(count).ToList();
     }
 
-    /// <summary></summary>
+    /// <summary>Renames the SystemPrompt's identifying name</summary>
     /// <param name="ID">The SystemPrompt ID to edit</param>
-    /// <param name="request">The updatedDTO Request</param>
+    /// <param name="name">The new name</param>
     /// <returns>The changed SystemPrompt</returns>
-    public SystemPrompt Update(Guid ID, SystemPromptDTO.UpdateRequest request){
-        return new SystemPrompt();
+    public SystemPrompt Rename(Guid ID, string name){
+        var entity = db.Set<SystemPrompt>().Find(ID)!;
+        entity.Name = name;
+        db.SaveChanges();
+        return entity;
     }
 
     /// <summary>Delete System prompt</summary>
     /// <param name="ID">The SystemPrompt ID to delete</param>
     public void Delete(Guid ID){
         
+    }
+
+    /// <summary>Add a prompt to the systemPrompt</summary>
+    /// <param name="ID">SystemPrompt ID to add to</param>
+    /// <param name="PromptID">Prompt ID to add</param>
+    /// <returns>The adjusted SystemPrompt with the Prompt</returns>
+    public SystemPrompt AddPrompt(Guid ID, Guid PromptID){
+        return new();
+    }
+    
+    /// <summary>Remove a prompt to the systemPrompt</summary>
+    /// <param name="ID">SystemPrompt ID to add to</param>
+    /// <param name="PromptID">Prompt ID to add</param>
+    /// <returns>The adjusted SystemPrompt with the Prompt</returns>
+    public SystemPrompt RemovePrompt(Guid ID, Guid PromptID){
+        return new();
     }
 }

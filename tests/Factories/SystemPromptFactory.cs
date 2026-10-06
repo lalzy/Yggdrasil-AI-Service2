@@ -19,11 +19,5 @@ public static class SystemPromptFactory
         db.SaveChanges();
         return entity;
     }
-
-    public static Prompt CreatePrompt(AppDbContext db){
-        var entity = new AutoFaker<Prompt>().RuleFor(x => x.ID, _ => Guid.Empty).Generate();
-        db.Set<Prompt>().Add(entity);
-        db.SaveChanges();
-        return entity;
-    }
 }
+

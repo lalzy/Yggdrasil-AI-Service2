@@ -147,23 +147,25 @@ public class SystemPromptServicesTests : DatabaseSetup{
     }
 
     [Fact]
-    public void Update_NameChangeSuccess(){
+    public void Rename_NameChangeSuccess(){
         var original = SystemPromptFactory.Create(Db());
-        var request = new SystemPromptDTO.UpdateRequest{Name=_faker.Lorem.Word()};
-        
-        original.Name = request.Name; // Add request name to original.
+        string newName="";
+        do{
+            newName = _faker.Lorem.Word();
+        }while(newName == original.Name);
 
-        var fetched = _service.Update(original.ID, request);
+        var fetched = _service.Rename(original.ID, newName);
 
-        Assert.Equivalent(original, fetched);
+        fetched = Db().Set<SystemPrompt>().Single(sp => sp.ID == original.ID);
 
-        fetched = Db().Set<SystemPrompt>().Include(sp => sp.Prompts).Single(sp => sp.ID == original.ID);
-
-        Assert.Equivalent(original, fetched);
+        Assert.Equal(newName, fetched.Name);
     }
 
     [Fact]
-    public void Update_PromptChangeSuccess(){
-        
+    public void Rename_ThrowsNullReferenceOnNotFound(){
+        Assert.Throws<NullReferenceException>(() => {_service.Rename(_faker.Random.Guid(), _faker.Lorem.Word());
+        });
     }
+
+    
 }
