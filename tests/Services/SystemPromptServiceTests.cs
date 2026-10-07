@@ -37,12 +37,15 @@ public class SystemPromptServicesTests : DatabaseSetup{
         Assert.Equivalent(result, saved, strict:true);
     }
 
-    [Fact]
-    public void Get_RetrieveRequested(){
-        var prompt = SystemPromptFactory.Create(Db());
-        var fetch = _service.Get(prompt.ID);
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(5)]
+    public void Get_RetrieveRequested(int index){
+        var prompts = Enumerable.Range(0, 10).Select(_ => SystemPromptFactory.Create(Db())).ToList();
+        var fetch = _service.Get(prompts[index].ID);
 
-        Assert.Equivalent(prompt, fetch);
+        Assert.Equivalent(prompts[index], fetch, strict:true);
     }
     
     [Fact]

@@ -23,7 +23,7 @@ public class PromptServices(AppDbContext db) {
     /// <param name="ID">The Prompt ID</param>
     /// <returns></returns>
     public Prompt Get(Guid ID){
-        return new();
+        return db.Set<Prompt>().Find(ID)!;
     }
 
     /// <summary></summary>
