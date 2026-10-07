@@ -1,5 +1,6 @@
 // PromptService.cs
 
+using Mapster;
 using Yggdrasil.Data;
 using Yggdrasil.Models.Entities;
 using Yggdrasil.Models.DTO;
@@ -12,7 +13,10 @@ public class PromptServices(AppDbContext db) {
     /// <param name="request">The PromptDTO Request</param>
     /// <returns></returns>
     public Prompt Create(PromptDTO.Request request){
-        return new();
+        Prompt prompt = request.Adapt<Prompt>();
+        db.Set<Prompt>().Add(prompt);
+        db.SaveChanges();
+        return prompt;
     }
 
     /// <summary></summary>

@@ -143,7 +143,13 @@ namespace Yggdrasil_ai_service.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("ID");
@@ -205,7 +211,7 @@ namespace Yggdrasil_ai_service.Migrations
             modelBuilder.Entity("Yggdrasil.Models.Entities.Prompt", b =>
                 {
                     b.HasOne("Yggdrasil.Models.Entities.SystemPrompt", null)
-                        .WithMany("prompts")
+                        .WithMany("Prompts")
                         .HasForeignKey("SystemPromptID");
                 });
 
@@ -230,7 +236,7 @@ namespace Yggdrasil_ai_service.Migrations
 
             modelBuilder.Entity("Yggdrasil.Models.Entities.SystemPrompt", b =>
                 {
-                    b.Navigation("prompts");
+                    b.Navigation("Prompts");
                 });
 
             modelBuilder.Entity("Yggdrasil.Models.Entities.World", b =>

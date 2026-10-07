@@ -12,12 +12,12 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="request">A SystemPromptDTO Request</param>
     /// <returns>The saved SystemPrompt</returns>
     public SystemPrompt Create(SystemPromptDTO.Request request){
-        var entity = new SystemPrompt { Name = request.Name, Prompts = request.prompts};
+        var entity = new SystemPrompt { Name = request.Name};
         db.Set<SystemPrompt>().Add(entity);
         db.SaveChanges();
         return entity;
     }
-
+    
     /// <summary>Fetch a requested SystemPrompt</summary>
     /// <param name="ID">The Guid of the systemPrompt</param>
     /// <returns>System Prompt if found, otherwise null</returns>

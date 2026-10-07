@@ -1,5 +1,6 @@
 // SystemPromptServiceTests.cs
 
+using FluentAssertions;
 using AutoBogus;
 using Bogus;
 using Yggdrasil.Tests.TestUtil;
@@ -21,50 +22,19 @@ public class SystemPromptServicesTests : DatabaseSetup{
     }
 
     [Fact]
-    public void Crate_ReturnsSavedSystemPrompt(){
-        var request = new SystemPromptDTO.Request(_faker.Lorem.Word(), new List<Prompt>());
+    public void Create_ReturnsSavedSystemPrompt(){
+        var request = AutoFaker.Generate<SystemPromptDTO.Request>();
         var result = _service.Create(request);
-        var saved = Db().Set<SystemPrompt>().Single();
-        Assert.Equal(saved.ID, result.ID);
+        result.Should().BeEquivalentTo(request, o => o.ExcludingMissingMembers());
     }
 
     [Fact]
     public void Create_SavesSystemPromptToDatabase(){
-        var name = _faker.Lorem.Word();
+        var request = AutoFaker.Generate<SystemPromptDTO.Request>();
+        var result = _service.Create(request);
         
-        var request = new SystemPromptDTO.Request(name, new List<Prompt> {new Prompt()});
-
-        _service.Create(request);
-
-        var saved = Db().Set<SystemPrompt>().Single();
-        Assert.Equal(name, saved.Name);
-    }
-
-    [Fact]
-    public void Create_SavesPrompts(){
-        var prompts = new List<Prompt> { new Prompt(), new Prompt() };
-        var request = new SystemPromptDTO.Request(_faker.Lorem.Word(), prompts);
-
-        _service.Create(request);
         var saved = Db().Set<SystemPrompt>().Include(s => s.Prompts).Single();
-        Assert.Equal(2, saved.Prompts.Count);
-    }
-
-    [Fact]
-    public void Create_SavesPromptFields(){
-        var prompt = new Prompt{
-            Name = _faker.Lorem.Word(),
-            Content = _faker.Lorem.Sentence(),
-            Source = SourceType.User,
-            Order = 3,
-            Active=true
-        };
-
-        var request = new SystemPromptDTO.Request(_faker.Lorem.Word(), new List<Prompt> { prompt });
-        _service.Create(request);
-
-        var saved = Db().Set<SystemPrompt>().Include(s => s.Prompts).Single().Prompts.Single();
-        Assert.Equivalent(saved, prompt);
+        Assert.Equivalent(result, saved, strict:true);
     }
 
     [Fact]

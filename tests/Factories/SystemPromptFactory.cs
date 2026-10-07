@@ -10,7 +10,7 @@ namespace Yggdrasil.Tests.Factories;
 public static class SystemPromptFactory
 {
     public static SystemPrompt Create(AppDbContext db, Prompt? prompt=null){
-        prompt ??= CreatePrompt(db);
+        prompt ??= PromptFactory.CreatePrompt(db);
         var entity = new AutoFaker<SystemPrompt>()
             .RuleFor(x => x.ID, _ => Guid.Empty)
             .RuleFor(x => x.Prompts, _ => new List<Prompt>{prompt})
