@@ -23,6 +23,7 @@ public class SystemPromptServices(AppDbContext db){
     /// <summary>Fetch a requested SystemPrompt</summary>
     /// <param name="ID">The Guid of the systemPrompt</param>
     /// <returns>System Prompt if found, otherwise null</returns>
+    /// <remarks>Returns owned prompts list ordered by the Order field</remarks>
     public SystemPrompt? Get(Guid ID){
         return _systemPrompt.Include(sp => sp.Prompts.OrderBy(p => p.Order)).FirstOrDefault(sp => sp.ID == ID);
     }
@@ -62,13 +63,18 @@ public class SystemPromptServices(AppDbContext db){
     /// <summary>Delete System prompt</summary>
     /// <param name="ID">The SystemPrompt ID to delete</param>
     public void Delete(Guid ID){
-        
+        var settings = db.Set<Settings>().Include(s => s.DefaultPrompt).Include(s => s.ActivePrompt).First();
+        settings.ActivePrompt = settings.DefaultPrompt;
+        var toDelete = _systemPrompt.Include(s => s.Prompts).Where(p => p.ID != settings.DefaultPrompt.ID);
+        _systemPrompt.RemoveRange(toDelete);
+        db.SaveChanges();
     }
 
     /// <summary>Add a prompt to the systemPrompt</summary>
     /// <param name="ID">SystemPrompt ID to add to</param>
     /// <param name="PromptID">Prompt ID to add</param>
     /// <returns>The adjusted SystemPrompt with the Prompt</returns>
+    /// <remarks>Sets prompt.Order to one higher than previous</remarks>
     public SystemPrompt AddPrompt(Guid ID, Guid PromptID){
         return new();
     }

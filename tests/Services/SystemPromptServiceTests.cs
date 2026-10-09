@@ -148,4 +148,28 @@ public class SystemPromptServicesTests : DatabaseSetup{
         Assert.Throws<NullReferenceException>(() => {_service.Rename(_faker.Random.Guid(), _faker.Lorem.Word());
         });
     }
+
+    [Fact]
+    public void Delete_DeletesEntry(){
+        SettingsFactory.Create(Db());
+        var toDelete = SystemPromptFactory.Create(Db());
+        _service.Delete(toDelete.ID);
+        var fetched = SystemPrompts.Find(toDelete.ID);
+        Assert.Null(fetched);
+    }
+
+    [Fact]
+    public void Delete_SystemPromptNotDeleted(){
+        var settings = SettingsFactory.Create(Db());
+        var toDelete = SystemPromptFactory.Create(Db());
+
+        _service.Delete(toDelete.ID);
+        var fetched = SystemPrompts.Find(settings.DefaultPrompt.ID);
+        Assert.NotNull(fetched);
+    }
+
+    [Fact]
+    public void Delete_OnlyRequestedEntryDeleted(){
+        
+    }
 }
