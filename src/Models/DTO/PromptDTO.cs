@@ -10,14 +10,14 @@ public class PromptDTO{
         [Required] string Name,
         [Required] string Content,
         SourceType Source,
-        int order,
-        bool active
+        int Order,
+        bool Active
     );
     public record UpdateRequest(
-        string? Name,
-        string? Content,
-        SourceType? Source,
-        int? order,
-        bool? active
+        string? Name = null,
+        string? Content = null,
+        SourceType? Source = null,
+        int? Order = null,
+        bool? Active = null
     );
 }

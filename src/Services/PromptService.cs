@@ -5,37 +5,48 @@ using Yggdrasil.Data;
 using Yggdrasil.Models.Entities;
 using Yggdrasil.Models.DTO;
 using Yggdrasil.Models.Enums;
+using Yggdrasil.Extensions;
 
 namespace Yggdrasil.Services;
 
 public class PromptServices(AppDbContext db) {
-    /// <summary></summary>
+    private readonly DbSet<Prompt> _prompts = db.Set<Prompt>();
+    
+    /// <summary>Create a new prompt</summary>
     /// <param name="request">The PromptDTO Request</param>
-    /// <returns></returns>
+    /// <returns>The created prompt entry</returns>
     public Prompt Create(PromptDTO.Request request){
         Prompt prompt = request.Adapt<Prompt>();
-        db.Set<Prompt>().Add(prompt);
+        _prompts.Add(prompt);
         db.SaveChanges();
         return prompt;
     }
 
-    /// <summary></summary>
+    /// <summary>Get a requested prompt</summary>
     /// <param name="ID">The Prompt ID</param>
-    /// <returns></returns>
+    /// <returns>The requested Prompt</returns>
     public Prompt Get(Guid ID){
-        return db.Set<Prompt>().Find(ID)!;
+        return _prompts.Find(ID)!;
     }
 
-    /// <summary></summary>
-    /// <param name="ID">The Prompt ID</param>
+    /// <summary>Update a prompts fields</summary>
+    /// <param name="ID">The Prompt ID to be updated</param>
     /// <param name="request">The PromptDTO updateRequest</param>
-    /// <returns></returns>
+    /// <returns>The updated Entry</returns>
     public Prompt Update(Guid ID, PromptDTO.UpdateRequest request){
-        return new();
+        var entity = _prompts.Find(ID)!;
+        request.Patch(entity);
+        db.SaveChanges();
+        return entity;
     }
 
     /// <summary>Delete the Prompt</summary>
-    public void Delete(){
+    /// <param name="ID">The Prompt ID to be deleted</param>
+    public void Delete(Guid ID){
+        var entity = _prompts.Find(ID);
+        if(entity == null) return;
         
+        _prompts.Remove(entity);
+        db.SaveChanges();
     }
 }
