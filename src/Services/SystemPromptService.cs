@@ -8,12 +8,14 @@ using Yggdrasil.Models.Enums;
 namespace Yggdrasil.Services;
 
 public class SystemPromptServices(AppDbContext db){
+    private readonly DbSet<SystemPrompt> _systemPrompt = db.Set<SystemPrompt>();
+    
     /// <summary>Create and store a SystemPrompt to the Database</summary>
     /// <param name="request">A SystemPromptDTO Request</param>
     /// <returns>The saved SystemPrompt</returns>
     public SystemPrompt Create(SystemPromptDTO.Request request){
         var entity = new SystemPrompt { Name = request.Name};
-        db.Set<SystemPrompt>().Add(entity);
+        _systemPrompt.Add(entity);
         db.SaveChanges();
         return entity;
     }
@@ -22,7 +24,7 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="ID">The Guid of the systemPrompt</param>
     /// <returns>System Prompt if found, otherwise null</returns>
     public SystemPrompt? Get(Guid ID){
-        return db.Set<SystemPrompt>().Include(sp => sp.Prompts).FirstOrDefault(sp => sp.ID == ID);
+        return _systemPrompt.Include(sp => sp.Prompts.OrderBy(p => p.Order)).FirstOrDefault(sp => sp.ID == ID);
     }
 
     /// <summary>Fetch all System prompts</summary>
@@ -30,7 +32,7 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="pageIndex">Page index to fetch from</param>
     /// <param name="sortOrder">Sorting order.</param>
     public List<SystemPrompt> GetAll(int count=10, int pageIndex=0, SortOrder sortOrder=SortOrder.IDAsc){
-        var request = db.Set<SystemPrompt>().AsNoTracking();
+        var request = _systemPrompt.AsNoTracking();
 
         request = sortOrder switch{
             SortOrder.IDAsc => request.OrderBy(sp => sp.ID),
@@ -51,7 +53,7 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="name">The new name</param>
     /// <returns>The changed SystemPrompt</returns>
     public SystemPrompt Rename(Guid ID, string name){
-        var entity = db.Set<SystemPrompt>().Find(ID)!;
+        var entity = _systemPrompt.Find(ID)!;
         entity.Name = name;
         db.SaveChanges();
         return entity;

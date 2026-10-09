@@ -16,6 +16,7 @@ namespace Yggdrasil.Tests.Services;
 public class SystemPromptServicesTests : DatabaseSetup{
     private readonly SystemPromptServices _service;
     private readonly Faker _faker = new();
+    private DbSet<SystemPrompt> SystemPrompts => Db().Set<SystemPrompt>();
 
     public SystemPromptServicesTests(){
         _service = new SystemPromptServices(Db());
@@ -33,7 +34,7 @@ public class SystemPromptServicesTests : DatabaseSetup{
         var request = AutoFaker.Generate<SystemPromptDTO.Request>();
         var result = _service.Create(request);
         
-        var saved = Db().Set<SystemPrompt>().Include(s => s.Prompts).Single();
+        var saved = SystemPrompts.Include(s => s.Prompts).Single();
         Assert.Equivalent(result, saved, strict:true);
     }
 
@@ -52,6 +53,14 @@ public class SystemPromptServicesTests : DatabaseSetup{
     public void Get_GetNullIfNotFound(){
         var fetch = _service.Get(_faker.Random.Guid());
         Assert.Null(fetch);
+    }
+
+    [Fact]
+    public void Get_GetsPromptsOrdered(){
+        var Prompts = Enumerable.Range(0, 10).Select(_ => PromptFactory.CreatePrompt(Db())).OrderBy(p => p.Order).ToList();
+        var systemPrompt = SystemPromptFactory.Create(Db(), Prompts);
+        var fetch = _service.Get(systemPrompt.ID);
+        Assert.Equal(Prompts.Select(p => p.ID), fetch.Prompts.Select(p => p.ID));
     }
 
     [Theory]
@@ -129,7 +138,7 @@ public class SystemPromptServicesTests : DatabaseSetup{
 
         var fetched = _service.Rename(original.ID, newName);
 
-        fetched = Db().Set<SystemPrompt>().Single(sp => sp.ID == original.ID);
+        fetched = SystemPrompts.Single(sp => sp.ID == original.ID);
 
         Assert.Equal(newName, fetched.Name);
     }
@@ -139,6 +148,4 @@ public class SystemPromptServicesTests : DatabaseSetup{
         Assert.Throws<NullReferenceException>(() => {_service.Rename(_faker.Random.Guid(), _faker.Lorem.Word());
         });
     }
-
-    
 }
