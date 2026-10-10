@@ -497,4 +497,5 @@ $RECYCLE.BIN/
 *.db-shm
 *.sqlite-journal
 *.sqlite-wal
-*.sqlite-shmsrc/Migrations/
+*.sqlite-shm
+src/Migrations/
