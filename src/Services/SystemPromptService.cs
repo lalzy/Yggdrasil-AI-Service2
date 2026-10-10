@@ -25,7 +25,7 @@ public class SystemPromptServices(AppDbContext db){
     /// <returns>System Prompt if found, otherwise null</returns>
     /// <remarks>Returns owned prompts list ordered by the Order field</remarks>
     public SystemPrompt? Get(Guid ID){
-        return _systemPrompt.Include(sp => sp.Prompts.OrderBy(p => p.Order)).FirstOrDefault(sp => sp.ID == ID);
+        return _systemPrompt.Include(sp => sp.Prompts).FirstOrDefault(sp => sp.ID == ID);
     }
 
     /// <summary>Fetch all System prompts</summary>
@@ -64,9 +64,14 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="ID">The SystemPrompt ID to delete</param>
     public void Delete(Guid ID){
         var settings = db.Set<Settings>().Include(s => s.DefaultPrompt).Include(s => s.ActivePrompt).First();
-        settings.ActivePrompt = settings.DefaultPrompt;
-        var toDelete = _systemPrompt.Include(s => s.Prompts).Where(p => p.ID != settings.DefaultPrompt.ID);
-        _systemPrompt.RemoveRange(toDelete);
+        if(ID == settings.DefaultPrompt.ID) throw new InvalidOperationException("Cannot dleete the default system prompt");
+        else if(settings.ActivePrompt.ID == ID) settings.ActivePrompt = settings.DefaultPrompt;
+        
+        var entity = _systemPrompt.Include(p => p.Prompts).FirstOrDefault(p => p.ID == ID);
+        if(entity == null) return;
+        
+        _systemPrompt.Remove(entity);
+        
         db.SaveChanges();
     }
 
@@ -75,8 +80,15 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="PromptID">Prompt ID to add</param>
     /// <returns>The adjusted SystemPrompt with the Prompt</returns>
     /// <remarks>Sets prompt.Order to one higher than previous</remarks>
-    public SystemPrompt AddPrompt(Guid ID, Guid PromptID){
-        return new();
+    public SystemPrompt? AddPrompt(Guid ID, Prompt prompt){
+        var entity = _systemPrompt.Find(ID)!;
+        if(prompt == null) throw new ArgumentNullException("Prompt may not be null");
+        
+        if(entity.Prompts.Contains(prompt)) return entity;
+
+        entity.Prompts.Add(prompt);
+        db.SaveChanges();
+        return entity;
     }
     
     /// <summary>Remove a prompt to the systemPrompt</summary>

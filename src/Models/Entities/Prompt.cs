@@ -7,8 +7,6 @@ public enum SourceType {
 }
 
 public class Prompt{
-    
-    public Guid ID { get; set; }
     /// <summary>Human readable identifier.</summary>
     public string? Name { get; set; }
     /// <summary>Prompts content</summary>
@@ -16,8 +14,6 @@ public class Prompt{
     public string? Content { get; set; }
     /// <summary>Source of prompt content</summary>
     public SourceType Source { get; set; }
-    /// <summary>The order it sits in the chain</summary>
-    public int Order { get; set; }
     /// <summary>If it should be sent to the LLM or not</summary>
     public bool Active { get; set; }
 }

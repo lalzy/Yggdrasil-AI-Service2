@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Yggdrasil.Models.Entities;
+using Yggdrasil.Services;
 
 namespace Yggdrasil.Data;
 
@@ -17,17 +18,14 @@ public static class InitDB{
     </rules>
  """;
 
-    private static SystemPrompt CreateDefaultPrompt(){
+    private static SystemPrompt CreateDefaultPrompt(AppDbContext db){
         var prompt = new SystemPrompt()
         {
             Name = "default"
         };
 
-        prompt.Prompts.Add(new Prompt { Name = "Main", Content = MAINCONTENT, Order=0, Active=true });
-        prompt.Prompts.Add(new Prompt { Name = "World", Source=SourceType.World, Order=1, Active=true});
-        prompt.Prompts.Add(new Prompt { Name = "Characters", Source=SourceType.Persona, Order=2, Active=true});
-        prompt.Prompts.Add(new Prompt { Name = "Characters", Source=SourceType.Characters, Order=3, Active=true});
-        prompt.Prompts.Add(new Prompt { Name = "ChatHistory", Source=SourceType.History, Order=4, Active=true});
+        prompt.Prompts.Add(new Prompt { Name = "Main", Content = MAINCONTENT, Active = true });
+        prompt.Prompts.Add(new Prompt { Name = "ChatHistory", Source = SourceType.History, Active = true });
 
         return prompt;
     }
@@ -37,7 +35,7 @@ public static class InitDB{
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         db.Database.EnsureCreated();
-        var prompt = CreateDefaultPrompt();
+        var prompt = CreateDefaultPrompt(db);
         if(!db.Set<Settings>().Any()){
             db.Set<Settings>().Add(new Settings{DefaultPrompt = prompt, ActivePrompt = prompt});
             db.SaveChanges();

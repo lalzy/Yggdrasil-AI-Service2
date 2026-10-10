@@ -34,7 +34,7 @@ public class SystemPromptServicesTests : DatabaseSetup{
         var request = AutoFaker.Generate<SystemPromptDTO.Request>();
         var result = _service.Create(request);
         
-        var saved = SystemPrompts.Include(s => s.Prompts).Single();
+        var saved = SystemPrompts.Single();
         Assert.Equivalent(result, saved, strict:true);
     }
 
@@ -56,11 +56,14 @@ public class SystemPromptServicesTests : DatabaseSetup{
     }
 
     [Fact]
-    public void Get_GetsPromptsOrdered(){
-        var Prompts = Enumerable.Range(0, 10).Select(_ => PromptFactory.CreatePrompt(Db())).OrderBy(p => p.Order).ToList();
-        var systemPrompt = SystemPromptFactory.Create(Db(), Prompts);
-        var fetch = _service.Get(systemPrompt.ID);
-        Assert.Equal(Prompts.Select(p => p.ID), fetch.Prompts.Select(p => p.ID));
+    public void Get_GetsPromptsOrdered()
+    {
+        var prompts = new AutoFaker<Prompt>().Generate(10);
+        var systemPrompt = SystemPromptFactory.Create(Db(), prompts);
+
+        var fetch = _service.Get(systemPrompt.ID)!;
+
+        Assert.Equal(prompts.Select(p => p.Name), fetch.Prompts.Select(p => p.Name));
     }
 
     [Theory]
@@ -151,6 +154,7 @@ public class SystemPromptServicesTests : DatabaseSetup{
 
     [Fact]
     public void Delete_DeletesEntry(){
+        // Settings is a required table due to holding a SystemPrompts entry.
         SettingsFactory.Create(Db());
         var toDelete = SystemPromptFactory.Create(Db());
         _service.Delete(toDelete.ID);
@@ -170,6 +174,71 @@ public class SystemPromptServicesTests : DatabaseSetup{
 
     [Fact]
     public void Delete_OnlyRequestedEntryDeleted(){
-        
+        // Settings is a required table due to holding a SystemPrompts entry.
+        var settings = SettingsFactory.Create(Db());
+        var prompts = Enumerable.Range(0, 10).Select(_ => SystemPromptFactory.Create(Db())).ToList();
+        var toDelete = prompts[_faker.Random.Int(0, prompts.Count - 1)];
+        var expected = SystemPrompts.Select(p => p.ID).Where(ID => ID != toDelete.ID).OrderBy(ID => ID).ToList();
+
+        _service.Delete(toDelete.ID);
+
+        var fetched = SystemPrompts.Select(p => p.ID).OrderBy(ID => ID).ToList();
+        Assert.Equal(expected, fetched);
+    }
+
+    [Fact]
+    public void Delete_DefaultSystemPromptProtected(){
+        var settings = SettingsFactory.Create(Db());
+        Assert.Throws<InvalidOperationException>(() => _service.Delete(settings.DefaultPrompt.ID));
+    }
+
+    [Fact]
+    public void Delete_InvalidIDDoesNotThrow(){
+        SettingsFactory.Create(Db());
+        var exceptions = Record.Exception(() => _service.Delete(_faker.Random.Guid()));
+        Assert.Null(exceptions);
+    }
+
+    [Fact]
+    public void AddPrompt_SuccessfullyAdd(){
+        var systemPrompt = SystemPromptFactory.Create(Db(), []);
+        var prompt = new AutoFaker<Prompt>().Generate();
+
+        Assert.Empty(systemPrompt.Prompts);
+
+        // Returns the object
+        var response = _service.AddPrompt(systemPrompt.ID, prompt);
+        var dbFetch = SystemPrompts.First(sp => sp.ID == systemPrompt.ID);
+        Assert.Equivalent(response, dbFetch, strict: true);
+
+        // Has the new Prompt
+        Assert.Single(dbFetch.Prompts);
+        Assert.Equivalent(prompt, dbFetch.Prompts[0], strict: true);
+    }
+    
+    [Fact]
+    public void AddPrompt_NewIsAppendedToLast()
+    {
+        var prompts = new AutoFaker<Prompt>().Generate(10);
+        var systemPrompt = SystemPromptFactory.Create(Db(), prompts);
+
+        var newPrompt = new AutoFaker<Prompt>().Generate();
+        _service.AddPrompt(systemPrompt.ID, newPrompt);
+
+        var fetch = SystemPrompts.First(sp => sp.ID == systemPrompt.ID);
+        Assert.Equal(11, fetch.Prompts.Count);
+        Assert.Equivalent(newPrompt, fetch.Prompts.Last(), strict: true);
+    }
+    
+    [Fact]
+    public void AddPrompt_NullPromptThrowsArgumentNullException(){
+        var systemPrompt = SystemPromptFactory.Create(Db());
+        Assert.Throws<ArgumentNullException>(() => _service.AddPrompt(systemPrompt.ID, null!));
+    }
+
+    [Fact]
+    public void AddPrompt_InvalidSystemPromptThrowsNullReferenceException(){
+        var prompt = new Prompt();
+        Assert.Throws<NullReferenceException>(() => _service.AddPrompt(_faker.Random.Guid(), prompt));
     }
 }
