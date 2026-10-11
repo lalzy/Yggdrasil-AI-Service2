@@ -1,5 +1,6 @@
 // SystempromptService.cs
 
+using System.Reflection;
 using Yggdrasil.Data;
 using Yggdrasil.Models.Entities;
 using Yggdrasil.Models.DTO;
@@ -15,6 +16,8 @@ public class SystemPromptServices(AppDbContext db){
     /// <returns>The saved SystemPrompt</returns>
     public SystemPrompt Create(SystemPromptDTO.Request request){
         var entity = new SystemPrompt { Name = request.Name};
+        entity.Prompts = BasePrompts.Create();
+        
         _systemPrompt.Add(entity);
         db.SaveChanges();
         return entity;
@@ -23,9 +26,9 @@ public class SystemPromptServices(AppDbContext db){
     /// <summary>Fetch a requested SystemPrompt</summary>
     /// <param name="ID">The Guid of the systemPrompt</param>
     /// <returns>System Prompt if found, otherwise null</returns>
-    /// <remarks>Returns owned prompts list ordered by the Order field</remarks>
+    /// <remarks>Returns owned prompts list</remarks>
     public SystemPrompt? Get(Guid ID){
-        return _systemPrompt.Include(sp => sp.Prompts).FirstOrDefault(sp => sp.ID == ID);
+        return _systemPrompt.FirstOrDefault(sp => sp.ID == ID);
     }
 
     /// <summary>Fetch all System prompts</summary>
@@ -46,7 +49,7 @@ public class SystemPromptServices(AppDbContext db){
             SortOrder.ModifiedDesc => request.OrderByDescending(sp => sp.UpdatedAt).ThenBy(sp => sp.ID),
             _ => throw new ArgumentOutOfRangeException(nameof(sortOrder), sortOrder, null)
         };
-        return request.Include(sp => sp.Prompts).Skip(pageIndex * count).Take(count).ToList();
+        return request.Skip(pageIndex * count).Take(count).ToList();
     }
 
     /// <summary>Renames the SystemPrompt's identifying name</summary>
@@ -67,7 +70,7 @@ public class SystemPromptServices(AppDbContext db){
         if(ID == settings.DefaultPrompt.ID) throw new InvalidOperationException("Cannot dleete the default system prompt");
         else if(settings.ActivePrompt.ID == ID) settings.ActivePrompt = settings.DefaultPrompt;
         
-        var entity = _systemPrompt.Include(p => p.Prompts).FirstOrDefault(p => p.ID == ID);
+        var entity = _systemPrompt.FirstOrDefault(p => p.ID == ID);
         if(entity == null) return;
         
         _systemPrompt.Remove(entity);
@@ -77,14 +80,14 @@ public class SystemPromptServices(AppDbContext db){
 
     /// <summary>Add a prompt to the systemPrompt</summary>
     /// <param name="ID">SystemPrompt ID to add to</param>
-    /// <param name="PromptID">Prompt ID to add</param>
-    /// <returns>The adjusted SystemPrompt with the Prompt</returns>
-    /// <remarks>Sets prompt.Order to one higher than previous</remarks>
-    public SystemPrompt? AddPrompt(Guid ID, Prompt prompt){
+    /// <param name="prompt">The prompt object to add</param>
+    /// <returns>The adjusted SystemPrompt</returns>
+    public SystemPrompt AddPrompt(Guid ID, Prompt prompt){
         var entity = _systemPrompt.Find(ID)!;
-        if(prompt == null) throw new ArgumentNullException("Prompt may not be null");
         
-        if(entity.Prompts.Contains(prompt)) return entity;
+        if(prompt == null) throw new ArgumentNullException($"{nameof(prompt)} may not be null");
+        
+        else if(entity.Prompts.Any(sp => string.Equals(sp.Name, prompt.Name, StringComparison.CurrentCultureIgnoreCase))) throw new ArgumentException($"A prompt named {prompt.Name} already exists.");
 
         entity.Prompts.Add(prompt);
         db.SaveChanges();
@@ -92,10 +95,21 @@ public class SystemPromptServices(AppDbContext db){
     }
     
     /// <summary>Remove a prompt to the systemPrompt</summary>
-    /// <param name="ID">SystemPrompt ID to add to</param>
-    /// <param name="PromptID">Prompt ID to add</param>
+    /// <param name="ID">SystemPrompt ID to remove from</param>
+    /// <param name="promptName">Prompt ID to remove</param>
+    /// <remarks>"remove" is effectively delete as the systemprompt owns the only reference</remarks>
     /// <returns>The adjusted SystemPrompt with the Prompt</returns>
     public SystemPrompt RemovePrompt(Guid ID, Guid PromptID){
+        return new();
+    }
+
+    
+    /// <summary>Remove a prompt to the systemPrompt</summary>
+    /// <param name="ID">SystemPrompt ID to add to</param>
+    /// <param name="promptName">Name of the prompt to edit</param>
+    /// <param name="editRecord">Fields to edit</param>
+    /// <returns>The adjusted SystemPrompt</returns>
+    public SystemPrompt? EditPrompt(Guid ID, string promptName, PromptDTO editRecord){
         return new();
     }
 }

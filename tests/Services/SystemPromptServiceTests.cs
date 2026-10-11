@@ -10,6 +10,7 @@ using Yggdrasil.Models.DTO;
 using Microsoft.EntityFrameworkCore;
 using Yggdrasil.Tests.Factories;
 using Yggdrasil.Models.Enums;
+using Yggdrasil.Data;
 
 namespace Yggdrasil.Tests.Services;
 
@@ -36,6 +37,19 @@ public class SystemPromptServicesTests : DatabaseSetup{
         
         var saved = SystemPrompts.Single();
         Assert.Equivalent(result, saved, strict:true);
+    }
+
+    [Fact]
+    public void Create_AddsBasePrompts(){
+        var request = AutoFaker.Generate<SystemPromptDTO.Request>();
+        var result = _service.Create(request);
+
+        var saved = SystemPrompts.Single();
+        var expected = BasePrompts.Create();
+
+        Assert.Equal(
+            expected.Select(p => (p.Name, p.Content, p.Source, p.Active)),
+            saved.Prompts.Select(p => (p.Name, p.Content, p.Source, p.Active)));
     }
 
     [Theory]
@@ -109,6 +123,10 @@ public class SystemPromptServicesTests : DatabaseSetup{
     [MemberData(nameof(SortOrders))]
     public void GetAll_ReturnsSorted(SortOrder sortOrder, Func<IEnumerable<SystemPrompt>, IEnumerable<SystemPrompt>> sort){
         var expected = Enumerable.Range(0, 100).Select(_ => SystemPromptFactory.Create(Db())).ToList();
+
+        foreach(var sp in expected)
+            sp.Name = string.Concat(sp.Name.Select(c => _faker.Random.Bool() ? char.ToUpper(c) : char.ToLower(c)));
+        Db().SaveChanges();
 
         var fetched = _service.GetAll(count: 100, sortOrder: sortOrder);
 
@@ -200,6 +218,20 @@ public class SystemPromptServicesTests : DatabaseSetup{
     }
 
     [Fact]
+    public void Delete_DeletingActivePromptSetsDefaultPrompt(){
+        var db = Db();
+        var settings = SettingsFactory.Create(db);
+        var active = SystemPromptFactory.Create(db);
+        settings.ActivePrompt = active;
+        db.SaveChanges();
+        
+        _service.Delete(active.ID);
+
+        var fetched = Db().Set<Settings>().Include(s => s.ActivePrompt).Include(s => s.DefaultPrompt).Single();
+        Assert.Equal(fetched.DefaultPrompt.ID, fetched.ActivePrompt.ID);
+    }
+
+    [Fact]
     public void AddPrompt_SuccessfullyAdd(){
         var systemPrompt = SystemPromptFactory.Create(Db(), []);
         var prompt = new AutoFaker<Prompt>().Generate();
@@ -215,7 +247,20 @@ public class SystemPromptServicesTests : DatabaseSetup{
         Assert.Single(dbFetch.Prompts);
         Assert.Equivalent(prompt, dbFetch.Prompts[0], strict: true);
     }
-    
+
+    [Fact]
+    public void AddPrompt_DuplicateNameThrowsArgumentException(){
+        var systemPrompt = SystemPromptFactory.Create(Db());
+        var newPrompt = AutoFaker.Generate<Prompt>();
+        newPrompt.Name = systemPrompt.Prompts[0].Name!.ToLower();
+
+        Assert.Throws<ArgumentException>(() => _service.AddPrompt(systemPrompt.ID, newPrompt));
+        
+        newPrompt.Name = systemPrompt.Prompts[0].Name!.ToUpper();
+
+        Assert.Throws<ArgumentException>(() => _service.AddPrompt(systemPrompt.ID, newPrompt));
+    }
+
     [Fact]
     public void AddPrompt_NewIsAppendedToLast()
     {

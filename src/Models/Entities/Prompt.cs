@@ -1,12 +1,11 @@
 // Prompts.cs
 
+using Yggdrasil.Models.Enums;
+
 namespace Yggdrasil.Models.Entities;
 
-public enum SourceType {
-    User, World, Characters, Persona,History
-}
-
 public class Prompt{
+    
     /// <summary>Human readable identifier.</summary>
     public string? Name { get; set; }
     /// <summary>Prompts content</summary>
