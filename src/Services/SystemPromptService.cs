@@ -35,6 +35,7 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="count">How many to fetch per page</param>
     /// <param name="pageIndex">Page index to fetch from</param>
     /// <param name="sortOrder">Sorting order.</param>
+    /// <throws cref="ArgumentOutofrangeexception">Thrown if passing an invalid sortOrder</throws>
     public List<SystemPrompt> GetAll(int count=10, int pageIndex=0, SortOrder sortOrder=SortOrder.IDAsc){
         var request = _systemPrompt.AsNoTracking();
 
@@ -65,9 +66,10 @@ public class SystemPromptServices(AppDbContext db){
 
     /// <summary>Delete System prompt</summary>
     /// <param name="ID">The SystemPrompt ID to delete</param>
+    /// <throws cref="InvalidOperationException">Thrown if attemptign to delete DefaultPrompt</throws>
     public void Delete(Guid ID){
         var settings = db.Set<Settings>().Include(s => s.DefaultPrompt).Include(s => s.ActivePrompt).First();
-        if(ID == settings.DefaultPrompt.ID) throw new InvalidOperationException("Cannot dleete the default system prompt");
+        if(ID == settings.DefaultPrompt.ID) throw new InvalidOperationException("Cannot delete the default system prompt");
         else if(settings.ActivePrompt.ID == ID) settings.ActivePrompt = settings.DefaultPrompt;
         
         var entity = _systemPrompt.FirstOrDefault(p => p.ID == ID);
@@ -82,10 +84,12 @@ public class SystemPromptServices(AppDbContext db){
     /// <param name="ID">SystemPrompt ID to add to</param>
     /// <param name="prompt">The prompt object to add</param>
     /// <returns>The adjusted SystemPrompt</returns>
+    /// <throws cref="ArgumentNullException">Thrown if prompt is null</throws>
+    /// <throws cref="ArgumentException">Thrown if prompt.Name already exist (case-Insensitive)</throws>
     public SystemPrompt AddPrompt(Guid ID, Prompt prompt){
         var entity = _systemPrompt.Find(ID)!;
         
-        if(prompt == null) throw new ArgumentNullException($"{nameof(prompt)} may not be null");
+        if(prompt == null) throw new ArgumentNullException(nameof(prompt));
         
         else if(entity.Prompts.Any(sp => string.Equals(sp.Name, prompt.Name, StringComparison.CurrentCultureIgnoreCase))) throw new ArgumentException($"A prompt named {prompt.Name} already exists.");
 
@@ -95,21 +99,13 @@ public class SystemPromptServices(AppDbContext db){
     }
     
     /// <summary>Remove a prompt to the systemPrompt</summary>
-    /// <param name="ID">SystemPrompt ID to remove from</param>
-    /// <param name="promptName">Prompt ID to remove</param>
-    /// <remarks>"remove" is effectively delete as the systemprompt owns the only reference</remarks>
-    /// <returns>The adjusted SystemPrompt with the Prompt</returns>
-    public SystemPrompt RemovePrompt(Guid ID, Guid PromptID){
-        return new();
-    }
-
-    
-    /// <summary>Remove a prompt to the systemPrompt</summary>
     /// <param name="ID">SystemPrompt ID to add to</param>
-    /// <param name="promptName">Name of the prompt to edit</param>
-    /// <param name="editRecord">Fields to edit</param>
+    /// <param name="prompts">The List of prompts</param>
     /// <returns>The adjusted SystemPrompt</returns>
-    public SystemPrompt? EditPrompt(Guid ID, string promptName, PromptDTO editRecord){
+    /// <throws cref="ArgumentException">Thrown when passed prompts removed the basePrompts</throws>
+    public SystemPrompt? UpdatePrompts(Guid ID, List<Prompt> prompts){
+        // Must have the base Prompts in the listing.
+        if(!BasePrompts.Create().All(b => prompts.Any(p => p.Name == b.Name))) throw new ArgumentException("BasePrompts were removed");
         return new();
     }
 }

@@ -286,4 +286,21 @@ public class SystemPromptServicesTests : DatabaseSetup{
         var prompt = new Prompt();
         Assert.Throws<NullReferenceException>(() => _service.AddPrompt(_faker.Random.Guid(), prompt));
     }
+
+    [Fact]
+    public void UpdatePrompts_ChangesEntirePromptListing(){
+        // Setup an plausible Prompt set
+        var prompts = BasePrompts.Create();
+        prompts.AddRange(Enumerable.Range(0, 10).Select(_ => AutoFaker.Generate<Prompt>()).ToList());
+
+        var systemPrompt = SystemPromptFactory.Create(Db(), prompts);
+    }
+
+    [Fact]
+    public void UpdatePrompts_EnsureMissingBasePromptThrows(){
+        var prompts = Enumerable.Range(0, 10).Select(_ => AutoFaker.Generate<Prompt>()).ToList();
+        var systemPrompt = SystemPromptFactory.Create(Db());
+
+        Assert.Throws<ArgumentException>(() => _service.UpdatePrompts(systemPrompt.ID, prompts));
+    }
 }
